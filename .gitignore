@@ -1,0 +1,38 @@
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache y compilados
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Datos (no versionar datos crudos o pesados por privacidad y límites de GitHub)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Variables de entorno y credenciales
+.env
+*.env
+credentials.json
+token.json
+
+# Reportes y salidas temporales pesadas
+reports/*.xlsx
+reports/*.csv
+!reports/.gitkeep
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
