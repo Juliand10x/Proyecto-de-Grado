@@ -2,61 +2,63 @@
 **Proyecto de Grado / Emprendimiento Tecnológico en Ciencia de Datos**  
 **Autor:** Julián Duarte  
 **Institución:** Universidad Externado de Colombia  
-**Versión:** 2.0 (Estrategia Refinada y Aprobación)
+**Versión:** 3.0 (Motor Multi-Proveedor y Optimización de Sourcing)
 
 ---
 
 ## 🎯 1. Visión y Filosofía del Sistema
 
-El proyecto consiste en el desarrollo de un **Copiloto Analítico de Arbitraje Comercial (*Human-in-the-Loop DSS*)** que identifica brechas de precio entre proveedores internacionales y el mercado local colombiano, considerando costos logísticos, comisiones de plataforma y el riesgo cambiario (TRM Dólar).
+El proyecto consiste en el desarrollo de un **Copiloto Analítico de Arbitraje Comercial Multi-Proveedor (*Multi-Source DSS*)**. 
+
+A diferencia de un modelo que depende de una sola tienda, este sistema monitorea de manera simultánea una **red de proveedores internacionales**, normaliza los costos de importación de cada uno y determina **cuál proveedor ofrece la mayor rentabilidad neta real** al vender el producto en **Mercado Libre Colombia (MCO)**.
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                   FUENTES DE PROVEEDORES (COMPRA)                      │
-│  1. Amazon US (Principal: Prime Deals, Black Friday, Envío Directo)    │
-│  2. AliExpress (Secundario: Accesorios ligeros de alto margen)          │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │ Extracción & Análisis
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                   MOTOR DE INTELIGENCIA DE DATOS                       │
-│  • API Mercado Libre Colombia (Precios, volumen y competencia)         │
-│  • Módulo Cambiario TRM (API Datos Abiertos + Break-Even TRM + Timing) │
-│  • Modelo de Costo Puesto en Colombia (Landed Cost + Comisiones Meli)  │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │ Emite
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│              FICHA DE OPORTUNIDAD ACCIONABLE (CONSEJO)                 │
-│  • Producto, proveedor, precio en USD y TRM de quiebre                 │
-│  • Precio sugerido en MCO, ganancia neta en COP y ROI esperado         │
-│  • Calificación de riesgo (peso, fragilidad, rotación estimada)       │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │ Decisión
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                    JULIÁN DUARTE (DECISOR EXPERTO)                     │
-│  - Aprueba la compra con base en criterio técnico                      │
-│  - Publica en Mercado Libre (Canal Central)                            │
-│  - Tráfico y visibilidad extra vía Facebook Marketplace (Embudo)       │
-└────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                      MATRIZ DE PROVEEDORES INTERNACIONALES                      │
+│   [Amazon US]     [Newegg]     [AliExpress]     [eBay Refurbished]     [Woot]   │
+│   Precios/Deals  Hardware/Combos Choice/Cupones   Liquidaciones      Open-Box   │
+└────────────────────────────────────────┬────────────────────────────────────────┘
+                                         │ Normalización de Precios & Fletes
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                     MOTOR DE INTELIGENCIA Y COMPARACIÓN                         │
+│  • API Mercado Libre Colombia (Precios, volumen y competencia)                  │
+│  • Módulo Cambiario TRM (API Datos Abiertos + Break-Even TRM + Timing)          │
+│  • Comparador de Landed Cost (Calcula flete, arancel y comisiones por proveedor)│
+└────────────────────────────────────────┬────────────────────────────────────────┘
+                                         │ Genera Ranking de Rentabilidad
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                 FICHA DE COMPARACIÓN MULTI-PROVEEDOR                            │
+│  Para el producto X:                                                            │
+│  - Proveedor A: Costo $34 USD ➔ Margen 21% (Entrega: 5 días)                    │
+│  - Proveedor B: Costo $28 USD ➔ Margen 32% (Entrega: 8 días) 🏆 GANADOR        │
+│  - Proveedor C: Costo $25 USD ➔ Margen 38% (Entrega: 18 días / Mayor riesgo)   │
+└────────────────────────────────────────┬────────────────────────────────────────┘
+                                         │ Decisión
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                      JULIÁN DUARTE (DECISOR EXPERTO)                            │
+│  - Selecciona la opción más conveniente según balance de Margen vs. Tiempo      │
+│  - Ejecuta la compra y publica en Mercado Libre (Canal Central)                 │
+│  - Promueve vía Facebook Marketplace (Embudo publicitario satélite)             │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🛒 2. Estrategia de Proveedores: ¿Dónde Comprar?
+## 🌐 2. La Red de Proveedores Internacionales
 
-### A. Proveedor Principal: Amazon US (Foco 80%)
-* **Por qué:** Confiabilidad absoluta en originalidad de hardware, garantía de devolución y acceso a tu membresía **Amazon Prime**.
-* **Ventajas operativas:**
-  1. **Envío Gratis a Colombia en compras > $35 USD:** Cientos de componentes aplican para entrega directa en Colombia sin pagar casillero.
-  2. **Eventos de Descuento Agresivo:** Prime Day (Julio), Prime Big Deal Days (Octubre), Black Friday y Cyber Monday (Noviembre), donde los componentes caen entre un 20% y 45%.
-  3. **Amazon Lightning Deals & Price Drops:** Descuentos flash que duran de 6 a 24 horas.
-* **Sub-fuente vinculada:** **Woot.com** (sitio de liquidaciones oficiales de Amazon exclusivo para miembros Prime con descuentos de hasta el 60%).
+El sistema comparará ofertas entre las siguientes plataformas según la categoría:
 
-### B. Proveedor Secundario: AliExpress Choice (Foco 20%)
-* **Por qué:** Ideal para el radar de "productos estrella" fuera de tecnología y accesorios de PC ultralivianos (peso < 200g) con márgenes netos superiores al 60% (cables trenzados, tarjetas PCIe, herramientas de precisión, adaptadores).
-* **Tiempos de entrega:** 10 a 18 días con envío Choice (gratis o muy económico).
+| Proveedor | Especialidad | Modelo de Flete / Logística | Fortaleza Principal |
+| :--- | :--- | :--- | :--- |
+| **Amazon US** | Hardware de marca, periféricos, monitores | Envío gratis a Colombia (> $35 USD) o casillero | Velocidad, Prime Deals, originalidad 100% garantizada. |
+| **Newegg** | Componentes de PC (RAM, SSD, GPUs, Placas) | Casillero en Miami | Ofertas *Shell Shocker*, combos de hardware y precios mayoristas. |
+| **AliExpress (Choice)** | Accesorios livianos, adaptadores, herramientas, gadgets | Envío directo Choice a Colombia (gratis o < $2 USD) | Márgenes altísimos (60% a 150%) en el radar de productos estrella. |
+| **eBay (Top-Rated / Certified Refurbished)** | Monitores, laptops, hardware empresarial | Casillero en Miami | Liquidaciones y reacondicionados oficiales con garantía de 1-2 años a mitad de precio. |
+| **Woot! (Amazon Liquidations)** | Electrónica y gadgets en remate | Casillero o Prime US | Descuentos agresivos de liquidación (40% al 70%). |
+| **B&H Photo Video** | Monitores especializados, almacenamiento, audio | Envío directo DHL/FedEx o casillero | Descuentos de temporada y sección *Used/Open-Box*. |
 
 ---
 
@@ -64,7 +66,7 @@ El proyecto consiste en el desarrollo de un **Copiloto Analítico de Arbitraje C
 
 1. **Mercado Libre Colombia (Canal Central y Analítico):**
    * Es el núcleo donde se consolidan ventas, reputación de vendedor, cobros protegidos por Mercado Pago y logística automatizada (Mercado Envíos).
-   * La meta operativa es alcanzar las 10 ventas iniciales con calificación verde para activar el termómetro de reputación y escalar a **MercadoLíder**.
+   * Meta: alcanzar el estatus de **MercadoLíder** para ganar algoritmo y visibilidad orgánica preferencial.
 2. **Facebook Marketplace (Canal Satélite de Publicidad):**
    * Se utiliza únicamente como **embudo de atracción gratuito (Top of Funnel)**.
    * Se listan los productos localmente para captar clientes y se les ofrece el enlace de Mercado Libre para que compren con tranquilidad, cuotas y envío asegurado.
@@ -95,18 +97,18 @@ Para proteger la rentabilidad y saber **cuándo comprar y cuándo esperar**:
 
 ---
 
-## 📋 6. Roadmap Detallado por Fases y Criterios de Aprobación
+## 📋 6. Roadmap Detallado por Fases
 
 ```
-[Fase 0: Cimientos] ──> [Fase 1: Meli Radar & TRM] ──> [Fase 2: Ficha de Compra] ──> [Fase 3: Alertas] ──> [Fase 4: ML & Grado]
-     (Completada)           (Siguiente Paso)               (Siguiente Venta)           (Escalamiento)         (Tesis Externado)
+[Fase 0: Cimientos] ──> [Fase 1: Meli Radar & TRM] ──> [Fase 2: Comparador Multi-Proveedor] ──> [Fase 3: Alertas] ──> [Fase 4: ML & Grado]
+     (Completada)           (Siguiente Paso)                    (Siguiente Venta)              (Escalamiento)        (Tesis Externado)
 ```
 
 ### 🔹 Fase 0: Cimientos y Configuración (Estado: ✅ COMPLETADA)
 - [x] Repositorio Git vinculado a GitHub (`Juliand10x/Proyecto-de-Grado`).
 - [x] Entorno virtual Python (`.venv`) y dependencias instaladas.
 - [x] Estructura modular de carpetas creada.
-- [x] Definición estratégica de canales y proveedores.
+- [x] Definición estratégica de canales y arquitectura multi-proveedor.
 
 ---
 
@@ -128,33 +130,32 @@ Para proteger la rentabilidad y saber **cuándo comprar y cuándo esperar**:
 
 ---
 
-### 🔹 Fase 2: Calculadora de Costos y Generador de Fichas de Oportunidad (Duración: 2 semanas)
-**Objetivo:** El sistema genera recomendaciones formales de compra para que Julián tome la decisión de su próxima importación.
+### 🔹 Fase 2: Motor de Comparación Multi-Proveedor y Fichas de Oportunidad (Duración: 2 semanas)
+**Objetivo:** El sistema cruza un producto objetivo contra múltiples tiendas internacionales y entrega la mejor opción de compra.
 
-- [ ] **Calculadora de Costo en Destino (`src/calculator.py`):**
-  - Modelo tributario: parametrizar exención TLC / IVA 19% (< $200 USD).
-  - Flete: Amazon Direct ($0 en compras elegibles) vs. casillero por libra.
-  - Comisiones de Mercado Libre: comisiones por categoría (11% al 16%) + costo fijo por transacción + costo de envío gratis.
-- [ ] **Generador de Ficha de Oportunidad (`src/advisory.py`):**
-  - Generación de la Ficha en formato Markdown/Texto legible con:
-    - Especificaciones técnicas validadas.
-    - Comparativa: Precio Amazon vs. Precio sugerido MCO.
-    - Utilidad neta en COP, ROI porcentual y TRM de quiebre.
-    - Nivel de riesgo logístico y de rotación.
-- [ ] 🎯 **Gate de Validación Comercial:** Julián revisa la Ficha, aprueba la compra de 1 o 2 productos y ejecuta la orden en Amazon aprovechando una ventana favorable de la TRM.
+- [ ] **Normalizador de Costos Multi-Proveedor (`src/calculator.py`):**
+  - Flete adaptativo según proveedor: Amazon Direct ($0 en elegibles) vs. Casillero por libra (Newegg, eBay, B&H) vs. Envío Choice (AliExpress).
+  - Impuestos Colombia (TLC < $200 USD / IVA parametrizado).
+  - Comisiones de Mercado Libre por categoría (11% al 16%) + costo de envío asumido.
+- [ ] **Módulo Comparador de Proveedores (`src/sourcing.py`):**
+  - Entrada: Modelo de producto (ej. `Crucial P3 1TB NVMe PCIe 3.0`).
+  - Consulta precios en Amazon, Newegg, AliExpress y eBay.
+  - Salida: Tabla comparativa ordenada por **Margen Neto Final ($ y %)**.
+- [ ] **Generador de Ficha de Recomendación:**
+  - Emisión de la ficha ejecutiva para que Julián escoja el proveedor ganador y ejecute la compra.
+- [ ] 🎯 **Gate de Validación Comercial:** Julián revisa la comparativa multi-proveedor, escoge la fuente más rentable y realiza una compra real.
 
 ---
 
 ### 🔹 Fase 3: Monitoreo Continuo y Bot de Alertas (Duración: 3 semanas)
-**Objetivo:** El sistema vigila ofertas 24/7 y te avisa al celular cuando hay que comprar.
+**Objetivo:** El sistema vigila ofertas en todos los proveedores y te avisa al celular cuando haya una oportunidad clara.
 
-- [ ] **Watchlist Tracker:**
-  - Monitoreo periódico de la lista de productos preseleccionados en Amazon.
-  - Detección de caídas de precio reales (evitar falsos descuentos mediante histórico).
+- [ ] **Watchlist Tracker Multi-Sitio:**
+  - Rastreo periódico de la lista de productos preseleccionados en las diferentes tiendas.
 - [ ] **Bot de Alertas (Telegram):**
-  - Notificación instantánea al celular con la Ficha de Oportunidad cada vez que un producto de la Watchlist baje de precio y la TRM sea favorable.
+  - Notificación instantánea al celular: *"¡Alerta de Arbitraje! El producto X está en oferta en [Proveedor Ganador] con un 31% de margen neto en Mercado Libre"*.
 - [ ] **Base de Datos Histórica (SQLite):**
-  - Registro diario de precios de la competencia en MCO y de la TRM para análisis de series de tiempo.
+  - Registro de precios de cada tienda para detectar caídas de precio históricas.
 - [ ] 🎯 **Gate de Validación Comercial:** Lograr al menos 3 a 5 ventas adicionales en Mercado Libre guiadas por las alertas del bot.
 
 ---
@@ -163,43 +164,42 @@ Para proteger la rentabilidad y saber **cuándo comprar y cuándo esperar**:
 **Objetivo:** Completar el rigor académico de Ciencia de Datos para la sustentación en la Universidad Externado.
 
 - [ ] **Matching Semántico de Productos (PLN):**
-  - Emparejamiento de títulos de Amazon y Mercado Libre mediante similitud de texto/embeddings (Cosine Similarity) para automatizar el cruce de catálogo.
+  - Emparejamiento de títulos de diferentes tiendas mediante similitud de texto/embeddings (Cosine Similarity) para automatizar el cruce de catálogos multitienda.
 - [ ] **Algoritmo de Optimización de Capital (Knapsack Problem):**
-  - Modelo de optimización matemática que recibe tu presupuesto disponible ($ COP) y genera la combinación de compra que maximiza la rentabilidad esperada.
+  - Modelo matemático que asigna presupuesto entre proveedores para maximizar el ROI de la canasta de compras.
 - [ ] **Dashboard Interactivo (Streamlit):**
-  - Panel web local con visualización de oportunidades, inventario activo y retorno de inversión real obtenido.
+  - Panel web local con visualización de oportunidades por proveedor, inventario activo y retorno real.
 - [ ] **Documento Final de Emprendimiento / Grado:**
   - Redacción del informe final con marco teórico, metodología de ingeniería de datos, validación empírica y resultados financieros del negocio.
 
 ---
 
-## 📌 Formato Estándar de la Ficha de Oportunidad (Ejemplo)
+## 📌 Ejemplo: Ficha de Comparación Multi-Proveedor
 
 ```text
-======================================================================
-🎯 FICHA DE OPORTUNIDAD #001
-======================================================================
-📦 PRODUCTO: Crucial RAM 16GB (1x16GB) DDR4 3200MHz SODIMM (Laptop)
-🏢 PROVEEDOR: Amazon US (Vendido y enviado por Amazon)
-🔗 LINK PROVEEDOR: https://amazon.com/dp/B08C5MSV8Z
-💵 PRECIO EN ORIGEN: $29.99 USD
-📈 TRM EFECTIVA: $3.360 COP [Estado: 🟢 Favorable - Valle Mensual]
-🚚 FLETE ESTIMADO: $0 COP (Envío Gratis a Colombia en compra > $35)
-💰 COSTO PUESTO EN COLOMBIA (Landed Cost): $100.766 COP
+================================================================================
+🎯 FICHA DE COMPARACIÓN MULTI-PROVEEDOR #002
+================================================================================
+📦 PRODUCTO: SSD M.2 NVMe Crucial P3 Plus 1TB PCIe 4.0 (Hasta 5000 MB/s)
+🛒 PRECIO OBJETIVO MERCADO LIBRE COLOMBIA:
+   - Competidor líder: $349.900 COP (Ventas acumuladas: +200 uds)
+   - Precio de venta sugerido: $329.900 COP
+   - Comisiones Meli + Envío local: $54.200 COP
+   - Ingreso Neto en Mercado Libre: $275.700 COP
 
-🛒 MERCADO LIBRE COLOMBIA:
-   - Competidor líder: $169.900 COP (Ventas estimadas: +80 uds/mes)
-   - Precio de venta sugerido: $159.900 COP
-   - Comisión Meli (Clásica 13% + retenciones): $25.500 COP
-   - Envío local asumido: $0 (comprador paga o incluido según rango)
+📊 COMPARATIVA DE PROVEEDORES (Cálculo puesto en Colombia a TRM $3.360):
+┌──────────────┬─────────────┬──────────────┬──────────────┬──────────────┬────────────┐
+│ Proveedor    │ Precio USD  │ Flete Est.   │ Costo Total  │ Ganancia ($) │ ROI Neto   │
+├──────────────┼─────────────┼──────────────┼──────────────┼──────────────┼────────────┤
+│ 🏆 Newegg    │ $53.99 USD  │ $16.000 (Cas)│ $197.406 COP │ +$78.294 COP │  39.6%     │
+│ 🥈 Amazon US │ $59.99 USD  │ $0 (Directo) │ $201.566 COP │ +$74.134 COP │  36.8%     │
+│ 🥉 AliExpress│ $58.50 USD  │ $0 (Choice)  │ $196.560 COP │ +$79.140 COP │  40.2% *   │
+└──────────────┴─────────────┴──────────────┴──────────────┴──────────────┴────────────┘
+* Nota AliExpress: Mayor tiempo de entrega (16 días vs. 5 días en Amazon/Newegg).
 
-📊 INDICADORES FINANCIEROS:
-   - Utilidad Neta en Bolsillo: +$33.634 COP por unidad
-   - Rentabilidad (ROI): 33.3%
-   - TRM Máxima de Quiebre: $3.950 COP (Margen seguro ante subida del dólar)
-   - Nivel de Riesgo: 🟢 MUY BAJO (Peso < 50g, no frágil, altísima rotación)
-
-👉 CONSEJO DE INVERSIÓN:
-   [COMPRA RECOMENDADA: 2 a 3 unidades] - Excelente brecha y dólar en rango óptimo.
-======================================================================
+👉 RECOMENDACIÓN DEL COPILOTO:
+   [PROVEEDOR RECOMENDADO: NEWEGG o AMAZON]
+   - Newegg ofrece el mejor balance de precio y entrega rápida a casillero en Miami.
+   - Amazon es la alternativa si deseas entrega directa sin gestión de casillero por solo $4.000 COP de diferencia en margen.
+================================================================================
 ```
