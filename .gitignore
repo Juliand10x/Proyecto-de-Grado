@@ -16,6 +16,8 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+*.db
+*.sqlite3
 
 # Variables de entorno y credenciales
 .env
