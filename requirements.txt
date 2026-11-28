@@ -12,6 +12,8 @@ matplotlib>=3.8.0
 seaborn>=0.13.0
 jupyterlab>=4.0.0
 
-# Utilidades y configuración
+# Configuración y pruebas
 python-dotenv>=1.0.0
+pyyaml>=6.0.1
+pytest>=8.0.0
 tqdm>=4.66.0

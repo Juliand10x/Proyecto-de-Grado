@@ -1,0 +1,32 @@
+# Parámetros de Negocio y Finanzas
+# Todas las modificaciones de comisiones, márgenes e impuestos se realizan aquí.
+
+app:
+  name: "Arbitraje E-Commerce Mercado Libre"
+  version: "1.0.0"
+  country: "MCO"  # Mercado Libre Colombia
+
+finance:
+  min_net_margin: 0.20           # 20% margen neto mínimo deseado
+  card_fx_spread: 0.02           # 2% sobrecosto bancario sobre la TRM oficial
+  provision_risk_rate: 0.03      # 3% provisión de garantía/devoluciones sobre precio de venta
+
+mercadolibre:
+  commission_rates:
+    ram_memory: 0.13             # 13% comisión clásica estimada en computación
+    solid_state_drive: 0.13      # 13% comisión clásica estimada
+    portable_monitors: 0.14      # 14% comisión clásica estimada
+    default: 0.13
+  fixed_fee_threshold_cop: 90000 # Publicaciones menores a este valor pagan cargo fijo adicional
+  fixed_fee_cop: 3500            # Costo fijo aproximado por venta baja
+  free_shipping_min_cop: 90000   # A partir de este valor se exige envío gratis (asumido por vendedor)
+  default_shipping_cost_cop: 18000 # Costo promedio de Mercado Envíos asumido
+
+logistics:
+  courier_rate_per_lb_cop: 18000 # Tarifa estándar de casillero en Miami por libra
+  packaging_cost_cop: 3000       # Costo local de empaque, caja y cinta
+
+taxes:
+  import_threshold_usd: 200.0    # Límite exención arancel TLC EE.UU.
+  default_iva_rate: 0.19         # 19% IVA Colombia si aplica
+  default_tariff_rate: 0.05      # 5% o 0% según subpartida arancelaria

@@ -7,61 +7,69 @@
 ---
 
 ## 🎯 Visión del Proyecto
-Desarrollar un sistema analítico de recomendación (*Decision Support System - DSS*) bajo el paradigma **Human-in-the-Loop**, diseñado para identificar, comparar y evaluar oportunidades de arbitraje comercial transfronterizo a través de un **motor multi-proveedor**.
+Desarrollar un sistema analítico de recomendación (*Decision Support System - DSS*) bajo el paradigma **Human-in-the-Loop**, diseñado para identificar, comparar y evaluar oportunidades de arbitraje comercial transfronterizo hacia **Mercado Libre Colombia (MCO)**.
 
-El sistema asume el rol de **Copiloto Analítico**: monitorea el mercado local en **Mercado Libre Colombia (MCO)** y compara en tiempo real múltiples tiendas internacionales (**Amazon US, Newegg, AliExpress, eBay Refurbished, Woot, B&H**), normaliza costos logísticos (*Landed Cost*), evalúa el riesgo cambiario (TRM) y genera **Fichas de Comparación Multi-Proveedor** para que el emprendedor elija la opción de compra que maximice el ROI y minimice el tiempo de rotación.
-
----
-
-## 🧭 Pilares Estratégicos
-
-1. **Canal Central de Ventas:** Mercado Libre Colombia (reputación, logística y pasarela protegida).
-2. **Canal Satélite de Atracción:** Facebook Marketplace (embudo publicitario gratuito para captar y dirigir compradores a Mercado Libre).
-3. **Matriz Multi-Proveedor:**
-   - **Amazon US:** Envío directo gratis a Colombia (> $35 USD), Prime Deals, originalidad garantizada.
-   - **Newegg:** Especialista en hardware de PC, combos y ofertas *Shell Shocker*.
-   - **AliExpress Choice:** Accesorios ultralivianos de alto margen y radar de productos estrella.
-   - **eBay (Top-Rated / Refurbished):** Monitores y liquidaciones con garantía oficial de fabricante.
-   - **Woot! / B&H Photo Video:** Liquidaciones de Amazon y ofertas de open-box.
-4. **Distribución del Portafolio:**
-   - **75% Núcleo Técnico (Tecnología y PC):** Memorias RAM, almacenamiento SSD NVMe, adaptadores Wi-Fi 6, monitores portátiles y periféricos gamer.
-   - **25% Radar Exploratorio ("Cazador de Productos Estrella"):** Productos fuera de tecnología con bajo peso (< 1 kg), alta brecha de precio (> 40%) y baja competencia local.
-5. **Motor Cambiario (Dólar / TRM):**
-   - API diaria de la TRM oficial (`datos.gov.co`) + spread bancario.
-   - Cálculo de la *TRM de Quiebre* (dólar máximo tolerable antes de perder rentabilidad).
-   - Indicador de timing estadístico (valle de oportunidad vs. techo de pausa).
+El sistema asume el rol de **Copiloto Analítico**: monitorea el mercado local, compara en tiempo real tiendas internacionales (**Amazon US y eBay Oficial**), normaliza costos logísticos (*Landed Cost*), evalúa el riesgo cambiario (TRM) y genera **Fichas de Oportunidad** para que el emprendedor tome decisiones de inversión fundamentadas en datos reales.
 
 ---
 
-## 🗂️ Estructura del Proyecto
+## 🧭 Reglas de Desarrollo Obligatorias (Ver [AGENTS.md](file:///c:/Users/sduar/Documents/Universidad/Mercado%20Libre/AGENTS.md))
+1. **Una fase a la vez:** Cada fase tiene un criterio de "Listo cuando" que debe cumplirse estrictamente antes de pasar a la siguiente.
+2. **Un commit por tarea terminada.**
+3. **Cero credenciales en código:** Uso estricto de `.env` (ignorado en `.gitignore`).
+4. **Parámetros centralizados en `config.yaml`:** Comisiones, márgenes e impuestos viven en configuración, no en código.
+5. **Pruebas automáticas (`pytest`):** Cálculos financieros protegidos con suites de pruebas.
+6. **Datos crudos inmutables:** Guardados con timestamp en `data/raw/` antes de cualquier transformación.
+
+---
+
+## 🗺️ Hoja de Ruta (Plan Maestro)
+Consultar [ROADMAP.md](file:///c:/Users/sduar/Documents/Universidad/Mercado%20Libre/ROADMAP.md) para el detalle de cada fase:
+* **Fase 1 (En curso):** Refuerzo de la base y exploración de la API de Mercado Libre.
+* **Fase 2:** Captura diaria de Mercado Libre y de la TRM (acumulación de series de tiempo).
+* **Fase 3:** Calculadora de costo puesto en Colombia, calibración con ventas reales y TRM de quiebre.
+* **Fase 4:** Lado de costos (Amazon/eBay), emparejamiento curado y Ficha de Oportunidad.
+* **Fase 5:** Panel en Streamlit, alertas en Telegram y reglas del dólar con backtesting.
+* **Fase 6:** Automatización progresiva, nuevos proveedores y ampliación de catálogo.
+
+---
+
+## 🗂️ Estructura del Repositorio
 ```text
+├── config.yaml          # Parámetros de negocio (comisiones, márgenes, costos)
+├── requirements.txt     # Dependencias de Python
+├── ROADMAP.md           # Plan maestro de implementación por fases
+├── README.md            # Documentación general del repositorio
+├── AGENTS.md            # Reglas de desarrollo y directrices técnicas
+├── .env.example         # Plantilla de variables de entorno
+├── .gitignore           # Archivos y carpetas excluidas de Git
 ├── data/
-│   ├── raw/             # Extracciones crudas de Meli y proveedores externos
-│   └── processed/       # Datasets limpios con métricas de precios y competencia
-├── notebooks/           # Notebooks de exploración y prototipado
-├── reports/             # Fichas de Oportunidad y resúmenes ejecutivos en Excel
-├── src/                 # Módulos de extracción, cálculo de costos y alertas
-│   ├── currency.py      # Motor de TRM oficial, timing y TRM de quiebre
-│   ├── meli_client.py   # Extractor de datos y competencia de Mercado Libre Colombia
-│   ├── calculator.py    # Calculadora de Landed Cost, comisiones e impuestos
-│   ├── sourcing.py      # Comparador multi-proveedor (Amazon, Newegg, AliExpress, etc.)
-│   └── advisory.py      # Generador de Fichas de Oportunidad para Julián
-├── .gitignore           # Configuración de exclusiones Git
-├── README.md            # Documentación general
-├── requirements.txt     # Dependencias del proyecto en Python
-└── ROADMAP.md           # Plan Maestro de Implementación detallado
+│   ├── raw/             # Respuestas crudas con timestamp (JSON, CSV)
+│   ├── processed/       # Datasets limpios
+│   └── meli.db          # Base de datos SQLite
+├── docs/                # Documentación técnica y hallazgos de APIs
+│   └── api_meli_hallazgos.md
+├── notebooks/           # Notebooks Jupyter para experimentación y auditoría
+├── reports/             # Fichas de oportunidad y reportes ejecutivos
+├── src/                 # Código fuente modular
+└── tests/               # Pruebas unitarias automatizadas con pytest
 ```
 
 ---
 
-## 🚀 Entorno de Desarrollo
+## 🚀 Instalación y Puesta en Marcha
 
 1. **Activar el entorno virtual:**
    ```powershell
    .venv\Scripts\Activate.ps1
    ```
 
-2. **Instalar dependencias:**
+2. **Instalar dependencias actualizadas:**
    ```powershell
    pip install -r requirements.txt
+   ```
+
+3. **Ejecutar pruebas unitarias:**
+   ```powershell
+   pytest
    ```

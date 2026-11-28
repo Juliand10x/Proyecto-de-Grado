@@ -1,205 +1,172 @@
-# 🚀 Plan Maestro de Implementación: Sistema de Arbitraje Comercial Basado en Datos
+# 🚀 Plan Maestro de Implementación: Arbitraje Comercial Basado en Datos
 **Proyecto de Grado / Emprendimiento Tecnológico en Ciencia de Datos**  
 **Autor:** Julián Duarte  
 **Institución:** Universidad Externado de Colombia  
-**Versión:** 3.0 (Motor Multi-Proveedor y Optimización de Sourcing)
+**Versión:** 4.0 (Plan Reajustado por Fases y Criterios de Aceptación)
 
 ---
 
-## 🎯 1. Visión y Filosofía del Sistema
+## 📌 Reglas de Trabajo (Valen para todas las fases)
 
-El proyecto consiste en el desarrollo de un **Copiloto Analítico de Arbitraje Comercial Multi-Proveedor (*Multi-Source DSS*)**. 
-
-A diferencia de un modelo que depende de una sola tienda, este sistema monitorea de manera simultánea una **red de proveedores internacionales**, normaliza los costos de importación de cada uno y determina **cuál proveedor ofrece la mayor rentabilidad neta real** al vender el producto en **Mercado Libre Colombia (MCO)**.
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                      MATRIZ DE PROVEEDORES INTERNACIONALES                      │
-│   [Amazon US]     [Newegg]     [AliExpress]     [eBay Refurbished]     [Woot]   │
-│   Precios/Deals  Hardware/Combos Choice/Cupones   Liquidaciones      Open-Box   │
-└────────────────────────────────────────┬────────────────────────────────────────┘
-                                         │ Normalización de Precios & Fletes
-                                         ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                     MOTOR DE INTELIGENCIA Y COMPARACIÓN                         │
-│  • API Mercado Libre Colombia (Precios, volumen y competencia)                  │
-│  • Módulo Cambiario TRM (API Datos Abiertos + Break-Even TRM + Timing)          │
-│  • Comparador de Landed Cost (Calcula flete, arancel y comisiones por proveedor)│
-└────────────────────────────────────────┬────────────────────────────────────────┘
-                                         │ Genera Ranking de Rentabilidad
-                                         ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                 FICHA DE COMPARACIÓN MULTI-PROVEEDOR                            │
-│  Para el producto X:                                                            │
-│  - Proveedor A: Costo $34 USD ➔ Margen 21% (Entrega: 5 días)                    │
-│  - Proveedor B: Costo $28 USD ➔ Margen 32% (Entrega: 8 días) 🏆 GANADOR        │
-│  - Proveedor C: Costo $25 USD ➔ Margen 38% (Entrega: 18 días / Mayor riesgo)   │
-└────────────────────────────────────────┬────────────────────────────────────────┘
-                                         │ Decisión
-                                         ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                      JULIÁN DUARTE (DECISOR EXPERTO)                            │
-│  - Selecciona la opción más conveniente según balance de Margen vs. Tiempo      │
-│  - Ejecuta la compra y publica en Mercado Libre (Canal Central)                 │
-│  - Promueve vía Facebook Marketplace (Embudo publicitario satélite)             │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+1. **Una fase a la vez, y cada fase termina con su criterio de "listo" cumplido** antes de pasar a la siguiente.
+2. **Un commit en Git por tarea terminada.**
+3. **Nada de claves en el código.** Todo va en `.env`, y `.env` debe estar en `.gitignore`.
+4. **Los parámetros de negocio viven en un archivo de configuración** (`config.yaml`), no dentro del código: comisión de Mercado Libre, margen mínimo, sobrecosto de tarjeta, costos de courier, impuestos.
+5. **Las fórmulas de dinero llevan pruebas automáticas** (`pytest`). Un error ahí cuesta plata real.
+6. **Los datos crudos se guardan antes de limpiarlos**, siempre con fecha y hora en `data/raw/`.
 
 ---
 
-## 🌐 2. La Red de Proveedores Internacionales
+## 🔹 Fase 1: Refuerzo de la base y exploración de la API de Mercado Libre
 
-El sistema comparará ofertas entre las siguientes plataformas según la categoría:
+* **Objetivo:** Dejar la base lista para acumular datos y averiguar qué entrega realmente la API de Mercado Libre Colombia.
+* **Por qué va primero:** Todo el proyecto depende de datos de Mercado Libre, y el plan original asumía que ciertos campos existían sin verificarlo. Mejor descubrir ahora lo que no se puede obtener.
 
-| Proveedor | Especialidad | Modelo de Flete / Logística | Fortaleza Principal |
-| :--- | :--- | :--- | :--- |
-| **Amazon US** | Hardware de marca, periféricos, monitores | Envío gratis a Colombia (> $35 USD) o casillero | Velocidad, Prime Deals, originalidad 100% garantizada. |
-| **Newegg** | Componentes de PC (RAM, SSD, GPUs, Placas) | Casillero en Miami | Ofertas *Shell Shocker*, combos de hardware y precios mayoristas. |
-| **AliExpress (Choice)** | Accesorios livianos, adaptadores, herramientas, gadgets | Envío directo Choice a Colombia (gratis o < $2 USD) | Márgenes altísimos (60% a 150%) en el radar de productos estrella. |
-| **eBay (Top-Rated / Certified Refurbished)** | Monitores, laptops, hardware empresarial | Casillero en Miami | Liquidaciones y reacondicionados oficiales con garantía de 1-2 años a mitad de precio. |
-| **Woot! (Amazon Liquidations)** | Electrónica y gadgets en remate | Casillero o Prime US | Descuentos agresivos de liquidación (40% al 70%). |
-| **B&H Photo Video** | Monitores especializados, almacenamiento, audio | Envío directo DHL/FedEx o casillero | Descuentos de temporada y sección *Used/Open-Box*. |
+### Qué se construye:
+- `AGENTS.md` con el contexto del proyecto, el stack y las reglas de trabajo.
+- Base de datos **SQLite** (`data/meli.db`) y esquema inicial de tablas:
+  - `ml_listings` (publicaciones capturadas de Mercado Libre)
+  - `source_products` (catálogo de productos vigilados en proveedores externos)
+  - `product_matches` (equivalencias curadas entre Meli y proveedores)
+  - `fx_rates` (histórico diario de la TRM oficial)
+  - `opportunities` (cálculos de margen y alertas generadas)
+  - `orders` (registro de compras e importaciones reales)
+- `config.yaml` con los parámetros de negocio.
+- Carpeta `tests/` con `pytest` configurado.
+- `notebooks/01_exploracion_api_meli.ipynb`.
 
----
+### Cómo se hace:
+1. Crear la aplicación en el portal de desarrolladores de Mercado Libre y guardar las credenciales en `.env`.
+2. Verificar que `.env` esté en `.gitignore` y que ningún secreto esté ya en GitHub.
+3. Probar **cada endpoint por separado** (búsqueda por categoría, detalle de un producto, tendencias, información del vendedor) y anotar para cada uno: si funciona sin token, qué campos devuelve y cuáles vienen vacíos.
+4. Revisar en especial si `sold_quantity` llega exacto o en rangos, y si la reputación del vendedor y la logística Full están disponibles.
+5. Guardar un ejemplo de respuesta cruda de cada endpoint en `data/raw/`.
+6. Escribir un documento corto `docs/api_meli_hallazgos.md` con lo que sí y lo que no se puede obtener.
 
-## 🏪 3. Estrategia de Canales de Venta
-
-1. **Mercado Libre Colombia (Canal Central y Analítico):**
-   * Es el núcleo donde se consolidan ventas, reputación de vendedor, cobros protegidos por Mercado Pago y logística automatizada (Mercado Envíos).
-   * Meta: alcanzar el estatus de **MercadoLíder** para ganar algoritmo y visibilidad orgánica preferencial.
-2. **Facebook Marketplace (Canal Satélite de Publicidad):**
-   * Se utiliza únicamente como **embudo de atracción gratuito (Top of Funnel)**.
-   * Se listan los productos localmente para captar clientes y se les ofrece el enlace de Mercado Libre para que compren con tranquilidad, cuotas y envío asegurado.
-
----
-
-## 💵 4. El Motor Cambiario (Dólar / TRM)
-
-Para proteger la rentabilidad y saber **cuándo comprar y cuándo esperar**:
-1. **API Oficial de la TRM:** Conexión diaria con la API del Banco de la República / Superfinanciera (`datos.gov.co`) + cálculo de TRM efectiva bancaria (+2% de spread).
-2. **TRM de Quiebre (*Break-Even TRM*):** Cálculo automático del dólar máximo tolerable para que un producto mantenga un margen neto mínimo del 20%. Si el dólar supera ese valor, la oportunidad se descarta.
-3. **Indicador de Timing (Z-Score & Medias Móviles):**
-   * **🔴 Techo mensual (Dólar caro):** Congelar compras de bajo margen; esperar retroceso.
-   * **🟢 Valle mensual (Dólar barato):** Ventana verde para comprar stock de la Watchlist.
+* **Listo cuando:** Tienes el documento de hallazgos y sabes con certeza si la captura será por API, por scraping o mixta.
+* **Decisión que depende de esta fase:** Si algún dato clave no está en la API, se decide si se obtiene por scraping (con sus riesgos de bloqueo) o si se cambia la variable analizada.
 
 ---
 
-## 📦 5. Portafolio de Inversión
+## 🔹 Fase 2: Captura diaria de Mercado Libre y de la TRM
 
-* **75% Núcleo Técnico (Tecnología & PC):**
-  * Memorias RAM (DDR4 / DDR5 para laptop y desktop).
-  * Almacenamiento SSD M.2 NVMe (Gen 3 y Gen 4 de 1TB y 2TB).
-  * Adaptadores de red Wi-Fi 6E / Bluetooth 5.3 PCIe y USB.
-  * Monitores portátiles USB-C (15.6" IPS 1080p).
-  * Periféricos gamer específicos de alta demanda y bajo peso.
-* **25% Radar "Cazador de Productos Estrella":**
-  * Productos fuera de tecnología detectados por tendencias en Mercado Libre Colombia que cumplan: *Peso < 1 kg + Brecha internacional/local > 40% + Poca o mala competencia local*.
+* **Objetivo:** Empezar a acumular series de tiempo, que es el activo de datos más valioso del proyecto.
+* **Por qué aquí:** Los datos de Mercado Libre de hoy no se pueden recuperar mañana. La TRM sí se puede recuperar históricamente, pero conviene dejarla automatizada.
 
----
+### Qué se construye:
+- `src/meli_client.py`: Cliente de la API (autenticación, reintentos, manejo de errores, rate limits).
+- `src/collect_meli.py`: Script de captura por categoría.
+- `src/currency.py`: Descarga de la TRM oficial desde datos abiertos (`datos.gov.co`), incluyendo historial completo.
+- Programador de tareas (cron o APScheduler) que lo ejecute cada día.
 
-## 📋 6. Roadmap Detallado por Fases
+### Cómo se hace:
+1. Empezar con **una sola categoría: memorias RAM**. (Razón: categoría pequeña y con especificaciones estandarizadas que permite auditar datos a mano rápido).
+2. Cada captura guarda: ID de publicación, título, categoría, precio, vendedor, reputación, logística, ventas acumuladas (según Fase 1) y timestamp. **No se sobrescribe nada.**
+3. Cargar el historial de la TRM y programar la captura diaria.
+4. Agregar registro de errores (`logging`) para monitorear ejecuciones fallidas.
+5. Cuando funcione de forma estable con RAM, agregar SSDs y monitores.
 
-```
-[Fase 0: Cimientos] ──> [Fase 1: Meli Radar & TRM] ──> [Fase 2: Comparador Multi-Proveedor] ──> [Fase 3: Alertas] ──> [Fase 4: ML & Grado]
-     (Completada)           (Siguiente Paso)                    (Siguiente Venta)              (Escalamiento)        (Tesis Externado)
-```
-
-### 🔹 Fase 0: Cimientos y Configuración (Estado: ✅ COMPLETADA)
-- [x] Repositorio Git vinculado a GitHub (`Juliand10x/Proyecto-de-Grado`).
-- [x] Entorno virtual Python (`.venv`) y dependencias instaladas.
-- [x] Estructura modular de carpetas creada.
-- [x] Definición estratégica de canales y arquitectura multi-proveedor.
+* **Listo cuando:** El sistema corre solo durante 5 días seguidos sin intervención y la base de datos tiene capturas diarias coherentes.
 
 ---
 
-### 🔹 Fase 1: Meli Radar & Motor Cambiario (Duración: 1 - 2 semanas)
-**Objetivo:** Tener funcionando los extractores de datos locales y el monitor del dólar en tiempo real.
+## 🔹 Fase 3: Calculadora de costo puesto en Colombia y TRM de quiebre
 
-- [ ] **Módulo Cambiario (`src/currency.py`):**
-  - Conectar a la API de datos abiertos de Colombia para descargar la TRM oficial diaria.
-  - Calcular medias móviles (20 y 50 días) y clasificar el estado del dólar (🟢 Valle / 🟡 Normal / 🔴 Techo).
-  - Función de cálculo de TRM efectiva bancaria.
-- [ ] **Módulo Extractor de Mercado Libre (`src/meli_client.py`):**
-  - Conectar a la API pública de Mercado Libre Colombia (`/sites/MCO/search`).
-  - Extractor para categorías de PC (Memorias RAM, SSDs, Monitores).
-  - Cálculo de métricas: Precio mínimo competitivo, precio mediana, competidores con envío Full y ventas acumuladas (`sold_quantity`).
-- [ ] **Módulo Radar de Tendencias (`src/trends_scanner.py`):**
-  - Consulta automática de `/sites/MCO/trends` para identificar palabras clave con crecimiento en Colombia fuera del sector de tecnología.
-- [ ] **Salida:** Reporte en Excel / DataFrame listo para usar.
-- [ ] 🎯 **Gate de Validación Comercial:** Identificar con datos reales 2 productos de hardware y 1 fuera de tecnología con alta demanda local.
+* **Objetivo:** Que el sistema calcule con precisión cuánto cuesta realmente un producto puesto en destino y cuánto margen neto deja.
+* **Por qué aquí:** Es el corazón financiero del proyecto. El punto de quiebre del dólar no se puede calcular sin esta calculadora; va antes que cualquier señal cambiaria.
 
----
+### La Fórmula Financiera:
+* **Utilidad neta:**
+  $$U = P \cdot (1 - c) - F - O - K \cdot \text{TRM}_{\text{ef}}$$
+* **Margen neto:**
+  $$M = \frac{U}{P}$$
+* **TRM Efectiva de Quiebre** (dólar efectivo máximo para cumplir el margen mínimo $m_{\min}$):
+  $$\text{TRM}_{\text{ef}}^* = \frac{P \cdot (1 - c - m_{\min}) - F - O}{K}$$
+* **TRM Oficial de Quiebre:**
+  $$\text{TRM}^* = \frac{\text{TRM}_{\text{ef}}^*}{1 + \text{sobrecosto}}$$
 
-### 🔹 Fase 2: Motor de Comparación Multi-Proveedor y Fichas de Oportunidad (Duración: 2 semanas)
-**Objetivo:** El sistema cruza un producto objetivo contra múltiples tiendas internacionales y entrega la mejor opción de compra.
+Donde:
+* $P$ = Precio de venta en Mercado Libre (COP).
+* $c$ = Comisión porcentual de Mercado Libre (11% a 16%).
+* $F$ = Costos fijos por venta en pesos (cargo fijo por venta, costo de envío gratis asumido).
+* $O$ = Otros costos en pesos independientes del dólar (empaque, courier local, provisión de riesgo/garantía).
+* $K$ = Costo del producto puesto en Colombia expresado **en dólares** (precio compra origen + sales tax + flete internacional en USD + arancel proporcional).
+* $\text{TRM}_{\text{ef}}$ = TRM oficial $\times (1 + \text{sobrecosto tarjeta/medio de pago})$.
 
-- [ ] **Normalizador de Costos Multi-Proveedor (`src/calculator.py`):**
-  - Flete adaptativo según proveedor: Amazon Direct ($0 en elegibles) vs. Casillero por libra (Newegg, eBay, B&H) vs. Envío Choice (AliExpress).
-  - Impuestos Colombia (TLC < $200 USD / IVA parametrizado).
-  - Comisiones de Mercado Libre por categoría (11% al 16%) + costo de envío asumido.
-- [ ] **Módulo Comparador de Proveedores (`src/sourcing.py`):**
-  - Entrada: Modelo de producto (ej. `Crucial P3 1TB NVMe PCIe 3.0`).
-  - Consulta precios en Amazon, Newegg, AliExpress y eBay.
-  - Salida: Tabla comparativa ordenada por **Margen Neto Final ($ y %)**.
-- [ ] **Generador de Ficha de Recomendación:**
-  - Emisión de la ficha ejecutiva para que Julián escoja el proveedor ganador y ejecute la compra.
-- [ ] 🎯 **Gate de Validación Comercial:** Julián revisa la comparativa multi-proveedor, escoge la fuente más rentable y realiza una compra real.
+### Qué se construye:
+- `src/costing.py`: Funciones de costo puesto, margen y TRM de quiebre analítica.
+- `tests/test_costing.py`: Pruebas automáticas (`pytest`) con casos conocidos.
+- `notebooks/02_calibracion_ventas_reales.ipynb`.
 
----
+### Cómo se hace:
+1. Confirmar con fuentes oficiales (DIAN y courier) aranceles e IVA en importaciones pequeñas (< $200 USD / TLC).
+2. Cargar en la tabla `orders` tus **3 ventas reales** con todos los costos reales que pagaste.
+3. Correr la calculadora sobre esas 3 ventas y comparar margen calculado vs. margen real.
+4. Calibrar parámetros en `config.yaml` hasta que la diferencia sea explicable y mínima.
+5. Parametrizar la tasa real de sobrecosto de tu tarjeta bancaria.
 
-### 🔹 Fase 3: Monitoreo Continuo y Bot de Alertas (Duración: 3 semanas)
-**Objetivo:** El sistema vigila ofertas en todos los proveedores y te avisa al celular cuando haya una oportunidad clara.
-
-- [ ] **Watchlist Tracker Multi-Sitio:**
-  - Rastreo periódico de la lista de productos preseleccionados en las diferentes tiendas.
-- [ ] **Bot de Alertas (Telegram):**
-  - Notificación instantánea al celular: *"¡Alerta de Arbitraje! El producto X está en oferta en [Proveedor Ganador] con un 31% de margen neto en Mercado Libre"*.
-- [ ] **Base de Datos Histórica (SQLite):**
-  - Registro de precios de cada tienda para detectar caídas de precio históricas.
-- [ ] 🎯 **Gate de Validación Comercial:** Lograr al menos 3 a 5 ventas adicionales en Mercado Libre guiadas por las alertas del bot.
+* **Listo cuando:** La calculadora reproduce el margen real de tus 3 ventas pasadas con una diferencia pequeña y explicable.
 
 ---
 
-### 🔹 Fase 4: Matching Inteligente, Optimización y Documento de Grado (Duración: 4 semanas)
-**Objetivo:** Completar el rigor académico de Ciencia de Datos para la sustentación en la Universidad Externado.
+## 🔹 Fase 4: Lado de costos, emparejamiento y primera Ficha de Oportunidad
 
-- [ ] **Matching Semántico de Productos (PLN):**
-  - Emparejamiento de títulos de diferentes tiendas mediante similitud de texto/embeddings (Cosine Similarity) para automatizar el cruce de catálogos multitienda.
-- [ ] **Algoritmo de Optimización de Capital (Knapsack Problem):**
-  - Modelo matemático que asigna presupuesto entre proveedores para maximizar el ROI de la canasta de compras.
-- [ ] **Dashboard Interactivo (Streamlit):**
-  - Panel web local con visualización de oportunidades por proveedor, inventario activo y retorno real.
-- [ ] **Documento Final de Emprendimiento / Grado:**
-  - Redacción del informe final con marco teórico, metodología de ingeniería de datos, validación empírica y resultados financieros del negocio.
+* **Objetivo:** Que el sistema te muestre productos concretos para comprar, con su margen y proveedor óptimo.
+* **Por qué aquí:** Ya se tiene la demanda (Fase 2) y la calculadora (Fase 3). Falta la oferta y el vínculo entre ambas.
+
+### Qué se construye:
+- `src/sources/amazon_watchlist.py`: Revisa precios de una **lista de ASINs** preseleccionada.
+- `src/sources/ebay.py`: Consulta la API oficial de eBay (solo producto nuevo).
+- `data/watchlist.csv`: Lista de productos vigilados.
+- `data/matches.csv` / tabla `product_matches`: Equivalencias **curadas manualmente por Julián**.
+- `src/opportunities.py`: Cruza demanda, costo y margen.
+
+### Cómo se hace:
+1. Comenzar con **dos proveedores**: Amazon (Watchlist) y eBay (solo nuevo).
+2. Para cada producto líder de Mercado Libre (Fase 2), buscar el equivalente en la lista. Emparejar por **número de parte, modelo y capacidad**, aprobado por Julián.
+3. Calcular para cada pareja el margen y la TRM de quiebre.
+4. Generar la **Ficha de Oportunidad**: producto, link de compra, precio en origen, costo puesto, precio sugerido en Meli, margen neto, TRM de quiebre, competidores y nivel de confianza.
+
+* **Listo cuando:** El sistema produce una lista de al menos 10 fichas para una categoría y tú las revisas y apruebas o descartas.
 
 ---
 
-## 📌 Ejemplo: Ficha de Comparación Multi-Proveedor
+## 🔹 Fase 5: Panel, alertas y reglas del dólar
 
-```text
-================================================================================
-🎯 FICHA DE COMPARACIÓN MULTI-PROVEEDOR #002
-================================================================================
-📦 PRODUCTO: SSD M.2 NVMe Crucial P3 Plus 1TB PCIe 4.0 (Hasta 5000 MB/s)
-🛒 PRECIO OBJETIVO MERCADO LIBRE COLOMBIA:
-   - Competidor líder: $349.900 COP (Ventas acumuladas: +200 uds)
-   - Precio de venta sugerido: $329.900 COP
-   - Comisiones Meli + Envío local: $54.200 COP
-   - Ingreso Neto en Mercado Libre: $275.700 COP
+* **Objetivo:** Que el sistema sirva en el día a día desde el celular y que las reglas del dólar estén respaldadas por datos.
 
-📊 COMPARATIVA DE PROVEEDORES (Cálculo puesto en Colombia a TRM $3.360):
-┌──────────────┬─────────────┬──────────────┬──────────────┬──────────────┬────────────┐
-│ Proveedor    │ Precio USD  │ Flete Est.   │ Costo Total  │ Ganancia ($) │ ROI Neto   │
-├──────────────┼─────────────┼──────────────┼──────────────┼──────────────┼────────────┤
-│ 🏆 Newegg    │ $53.99 USD  │ $16.000 (Cas)│ $197.406 COP │ +$78.294 COP │  39.6%     │
-│ 🥈 Amazon US │ $59.99 USD  │ $0 (Directo) │ $201.566 COP │ +$74.134 COP │  36.8%     │
-│ 🥉 AliExpress│ $58.50 USD  │ $0 (Choice)  │ $196.560 COP │ +$79.140 COP │  40.2% *   │
-└──────────────┴─────────────┴──────────────┴──────────────┴──────────────┴────────────┘
-* Nota AliExpress: Mayor tiempo de entrega (16 días vs. 5 días en Amazon/Newegg).
+### Qué se construye:
+- `app/dashboard.py` en Streamlit: Tabla de oportunidades, botones de aprobar/rechazar, gráficos de TRM y precios.
+- `src/telegram_bot.py`: Alertas al celular cuando una oportunidad supera el margen mínimo.
+- `src/fx_rules.py`: Reglas del dólar.
+- `notebooks/03_backtest_dolar.ipynb`.
 
-👉 RECOMENDACIÓN DEL COPILOTO:
-   [PROVEEDOR RECOMENDADO: NEWEGG o AMAZON]
-   - Newegg ofrece el mejor balance de precio y entrega rápida a casillero en Miami.
-   - Amazon es la alternativa si deseas entrega directa sin gestión de casillero por solo $4.000 COP de diferencia en margen.
-================================================================================
-```
+### Cómo se hace:
+1. Mostrar la distancia entre la TRM actual y la TRM de quiebre (margen de seguridad).
+2. Incluir medias móviles de 20 y 50 días como **indicador informativo**, no orden ciega.
+3. Realizar backtesting de las reglas del dólar comparadas contra una compra periódica fija.
+4. Registrar el histórico de aprobaciones y rechazos de Julián para retroalimentar el sistema.
+
+* **Listo cuando:** Recibes alertas reales en Telegram y puedes sustentar con datos empíricos si una regla del dólar aporta o no rentabilidad.
+
+---
+
+## 🔹 Fase 6: Automatización por partes y ampliación
+
+* **Criterio de entrada:** Solo se inicia si las fases 1 a 5 demostraron alta efectividad y rentabilidad. Se ejecuta de menor a mayor riesgo:
+
+1. Actualización automática de precios de tus publicaciones según costo y TRM del día.
+2. Publicación de nuevos productos aprobados por ti vía API de Mercado Libre.
+3. Seguimiento de pedidos y avisos de ventas.
+4. Apoyo para impresión de etiquetas y despacho.
+5. Ampliación: nuevos proveedores (Newegg, AliExpress Choice, Woot), nuevas categorías, emparejamiento automático con PLN, optimización de presupuesto (Problema de la Mochila), productos estrella fuera de tecnología y publicaciones en Facebook Marketplace.
+6. **Compra automática: la última.** Con tope diario de capital y autorización previa.
+
+---
+
+## 📌 Supuestos Operativos Validados
+* **Condición de producto:** Solo producto nuevo (cero reacondicionados ni usados).
+* **Nicho inicial:** Hardware de PC (Memorias RAM primero, luego SSDs y monitores).
+* **Proveedores iniciales:** Amazon US y eBay Oficial.
+* **Canales:** Mercado Libre como canal central; Facebook Marketplace como tarea manual de apoyo publicitario.
+* **Parámetros:** Margen mínimo y comisiones centralizados en `config.yaml`.
